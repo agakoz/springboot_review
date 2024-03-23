@@ -20,6 +20,13 @@ public class PostController {
         int pageNumber = page >= 0 ? page : 0;
         return PostToDtoMapper.mapToPostDtos(postService.getPosts(pageNumber));
     }
+
+    @GetMapping("/posts/comments")
+    public List<Post> getPostsWithComments(@RequestParam(required = false) int page) throws IllegalAccessException {
+        int pageNumber = page >= 0 ? page : 0;
+        return postService.getPostsWithComments(pageNumber);
+    }
+
     @GetMapping("/posts/{id}")
     public Post getSiglePost(@PathVariable long id) throws IllegalAccessException {
         return postService.getSinglePost(id);
