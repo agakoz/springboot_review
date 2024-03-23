@@ -2,6 +2,7 @@ package pl.demo.restapi.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import pl.demo.restapi.dto.PostDTO;
 import pl.demo.restapi.model.Comment;
@@ -19,16 +20,16 @@ public class PostService {
     final PostRepository postRepository;
     final CommentRepository commentRepository;
 
-    public List<Post> getPosts(int page) {
-        return postRepository.findAllPost(PageRequest.of(page, PAGE_SIZE));
+    public List<Post> getPosts(int page, Sort.Direction sort) {
+        return postRepository.findAllPost(PageRequest.of(page, PAGE_SIZE, Sort.by(sort, "id")));
     }
 
     public Post getSinglePost(long id) {
         return postRepository.findById(id).orElseThrow();
     }
 
-    public List<Post> getPostsWithComments(int pageNumber) {
-        List<Post> posts = getPosts(pageNumber);
+    public List<Post> getPostsWithComments(int pageNumber, Sort.Direction sort) {
+        List<Post> posts = getPosts(pageNumber, sort);
         List<Long> ids = posts.stream().map(Post::getId).collect(Collectors.toList());
         List<Comment> comments = commentRepository.findAllByIdIn(ids);
         posts.forEach(post -> post.setComments(extractComments(comments, post.getId())));
