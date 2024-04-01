@@ -14,29 +14,29 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PostController {
     private final PostService postService;
-    @GetMapping("/posts/idSort")
+    @GetMapping("/posts")
     public List<PostDTO> getPostsSortId(@RequestParam(required = false) Integer page, Sort.Direction sort) throws IllegalAccessException {
         return PostToDtoMapper.mapToPostDtos(postService.getPosts(page, sort, "id"));
     }
 
-    @GetMapping("/posts/titleSort")
-    public List<PostDTO> getPostsSortTitle(@RequestParam(required = false) Integer page, Sort.Direction sort) throws IllegalAccessException {
-        return PostToDtoMapper.mapToPostDtos(postService.getPosts(page, sort, "title"));
-    }
+//    @GetMapping("/posts/titleSort")
+//    public List<PostDTO> getPostsSortTitle(@RequestParam(required = false) Integer page, Sort.Direction sort) throws IllegalAccessException {
+//        return PostToDtoMapper.mapToPostDtos(postService.getPosts(page, sort, "title"));
+//    }
 
-    @GetMapping("/posts/comments/idSort")
-    public List<Post> getPostsWithCommentsSortId(@RequestParam(required = false) Integer page,  Sort.Direction sort) throws IllegalAccessException {
-        int pageNumber = page != null && page >= 0 ? page : 0;
-        Sort.Direction sortDirection = sort != null? sort : Sort.Direction.ASC;
-        return postService.getPostsWithComments(pageNumber, sortDirection, "id");
-    }
+//    @GetMapping("/posts/comments/idSort")
+//    public List<Post> getPostsWithCommentsSortId(@RequestParam(required = false) Integer page,  Sort.Direction sort) throws IllegalAccessException {
+//        int pageNumber = page != null && page >= 0 ? page : 0;
+//        Sort.Direction sortDirection = sort != null? sort : Sort.Direction.ASC;
+//        return postService.getPostsWithComments(pageNumber, sortDirection, "id");
+//    }
 
-    @GetMapping("/posts/comments/titleSort")
-    public List<Post> getPostsWithCommentsSortTitle(@RequestParam(required = false) Integer page,  Sort.Direction sort) throws IllegalAccessException {
-        int pageNumber = page != null && page >= 0? page : 0;
-        Sort.Direction sortDirection = sort != null? sort : Sort.Direction.ASC;
-        return postService.getPostsWithComments(pageNumber, sortDirection, "title");
-    }
+//    @GetMapping("/posts/comments/titleSort")
+//    public List<Post> getPostsWithCommentsSortTitle(@RequestParam(required = false) Integer page,  Sort.Direction sort) throws IllegalAccessException {
+//        int pageNumber = page != null && page >= 0? page : 0;
+//        Sort.Direction sortDirection = sort != null? sort : Sort.Direction.ASC;
+//        return postService.getPostsWithComments(pageNumber, sortDirection, "title");
+//    }
 
     @GetMapping("/posts/{id}")
     public Post getSiglePost(@PathVariable long id) throws IllegalAccessException {
