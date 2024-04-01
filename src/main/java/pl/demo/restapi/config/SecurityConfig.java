@@ -85,7 +85,6 @@ public class SecurityConfig {
                                 .requestMatchers("/something").hasAuthority("ROLE_USER")
                                 .anyRequest().authenticated()
                 )
-                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // nie tworzy sesji http
                 .addFilter(authenticationFilter())
                 .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))) //zwraca zawsze 401 dla błędów
                 .build();
