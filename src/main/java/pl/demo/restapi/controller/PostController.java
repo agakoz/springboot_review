@@ -2,6 +2,8 @@ package pl.demo.restapi.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import pl.demo.restapi.dto.PostDTO;
 import pl.demo.restapi.model.Comment;
@@ -15,7 +17,11 @@ import java.util.List;
 public class PostController {
     private final PostService postService;
     @GetMapping("/posts")
-    public List<PostDTO> getPostsSortId(@RequestParam(required = false) Integer page, Sort.Direction sort) throws IllegalAccessException {
+    public List<PostDTO> getPostsSortId(
+            @RequestParam(required = false) Integer page,
+            Sort.Direction sort,
+            @AuthenticationPrincipal UsernamePasswordAuthenticationToken user
+            ) throws IllegalAccessException {
         return PostToDtoMapper.mapToPostDtos(postService.getPosts(page, sort, "id"));
     }
 
