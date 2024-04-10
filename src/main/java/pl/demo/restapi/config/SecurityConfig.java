@@ -1,13 +1,10 @@
 package pl.demo.restapi.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.classgraph.ClassGraph;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -18,15 +15,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.provisioning.JdbcUserDetailsManager;
+import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 
 import javax.sql.DataSource;
 
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
     private static final String[] AUTH_WHITELIST = {
             // -- Swagger UI v2
@@ -47,7 +43,24 @@ public class SecurityConfig {
     private final RestAuthenticationSuccessHandler successHandler;
     private final RestAuthenticationFailureHandler failureHandler;
     private final AuthenticationConfiguration authenticationConfiguration;
+    private final String secret;
     private final DataSource dataSource;
+
+    public SecurityConfig(
+            ObjectMapper objectMapper,
+            RestAuthenticationSuccessHandler successHandler,
+            RestAuthenticationFailureHandler failureHandler,
+            AuthenticationConfiguration authenticationConfiguration,
+            DataSource dataSource,
+            @Value("${jwt.secret}") String secret
+            ) {
+        this.objectMapper = objectMapper;
+        this.successHandler = successHandler;
+        this.failureHandler = failureHandler;
+        this.authenticationConfiguration = authenticationConfiguration;
+        this.secret = secret;
+        this.dataSource = dataSource;
+    }
 
 
     @Bean
@@ -55,38 +68,31 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
-    public InMemoryUserDetailsManager userDetailsService() {
-        UserDetails user = User
-                .withUsername("test")
-                .password(passwordEncoder().encode("test"))
-//                .password("test")
-                .roles("USER")
-                .build();
-        return new InMemoryUserDetailsManager(user);
-    }
 //    @Bean
-//    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-//        return http
-////                .csrf(AbstractHttpConfigurer::disable)
-//                .authorizeHttpRequests((requests) -> requests
-//                        .requestMatchers(OPTIONS).permitAll() // allow CORS option calls for Swagger UI
-//                        .requestMatchers("/openapi/openapi.yml").permitAll()
-//                        .anyRequest().authenticated())
+//    public InMemoryUserDetailsManager userDetailsService() {
+//        UserDetails user = User
+//                .withUsername("test")
+//                .password(passwordEncoder().encode("test"))
+////                .password("test")
+//                .roles("USER")
 //                .build();
+//        return new InMemoryUserDetailsManager(user);
 //    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        return http.csrf(AbstractHttpConfigurer::disable)
+        return http
+                .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(
                         auth -> auth
                                 .requestMatchers(AUTH_WHITELIST).permitAll()
-                                .requestMatchers("/something").hasAuthority("ROLE_USER")
+//                                .requestMatchers("/something").hasAuthority("ROLE_USER")
                                 .anyRequest().authenticated()
                 )
                 .addFilter(authenticationFilter())
-                .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))) //zwraca zawsze 401 dla błędów
+                .addFilter(new JwtAuthorizationFilter(authenticationManager(), userDetailsService(), secret))
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+//                .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))) //zwraca zawsze 401 dla błędów
                 .build();
 
     }
@@ -103,5 +109,30 @@ public class SecurityConfig {
         filter.setAuthenticationManager(authenticationManager());
 
         return filter;
+    }
+
+    @Bean
+    public UserDetailsManager userDetailsService() {
+        JdbcUserDetailsManager user = new JdbcUserDetailsManager(dataSource);
+        UserDetails test = User.withUsername("test")
+                .password(passwordEncoder().encode("test"))
+                .roles("USER")
+                .build();
+        String username = test.getUsername();
+        if (!user.userExists(username)) {
+            user.createUser(test);
+        }
+//
+//        UserDetails admin = User.withUsername("admin")
+//                .password(passwordEncoder().encode("admin"))
+//                .roles("ADMIN")
+//                .build();
+//
+//        String adminusername = admin.getUsername();
+//        if (!user.userExists(adminusername)) {
+//            user.createUser(admin);
+//        }
+
+        return user;
     }
 }
